@@ -29,7 +29,7 @@ func (x *Queue) Send(ctx context.Context, msg string, delaySec ...int32) (err er
 	return
 }
 
-func (x *Queue) Receiver(fn FnReceiver, chErr chan<- error) {
+func (x *Queue) ReceiverWithChannel(fn FnReceiver, chErr chan<- error) {
 	var err error
 	var ctx = context.Background()
 
@@ -56,6 +56,35 @@ func (x *Queue) Receiver(fn FnReceiver, chErr chan<- error) {
 			}); err != nil {
 				chErr <- err
 				continue
+			}
+		}
+	}
+}
+
+func (x *Queue) Receiver(fn FnReceiver) {
+	var err error
+	var ctx = context.Background()
+
+	for {
+		var message *sqs.ReceiveMessageOutput
+		if message, err = x.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+			QueueUrl: x.url.QueueUrl,
+			//MaxNumberOfMessages: 1,
+			WaitTimeSeconds: 1,
+		}); err != nil {
+			panic(err)
+		}
+
+		for _, item := range message.Messages {
+			if err = fn(item); err != nil {
+				panic(err)
+			}
+
+			if _, err = x.client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
+				QueueUrl:      x.url.QueueUrl,
+				ReceiptHandle: item.ReceiptHandle,
+			}); err != nil {
+				panic(err)
 			}
 		}
 	}
