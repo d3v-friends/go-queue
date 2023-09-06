@@ -3,6 +3,7 @@ package fnSqs
 import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/d3v-friends/pure-go/fnParams"
 )
 
 type Queue struct {
@@ -18,10 +19,12 @@ func newQueue(url *sqs.GetQueueUrlOutput, client *sqs.Client) (res *Queue, err e
 	return
 }
 
-func (x *Queue) Send(ctx context.Context, msg string) (err error) {
+func (x *Queue) Send(ctx context.Context, msg string, delaySec ...int32) (err error) {
+	var delay = fnParams.Get(delaySec)
 	_, err = x.client.SendMessage(ctx, &sqs.SendMessageInput{
-		MessageBody: &msg,
-		QueueUrl:    x.url.QueueUrl,
+		MessageBody:  &msg,
+		QueueUrl:     x.url.QueueUrl,
+		DelaySeconds: delay,
 	})
 	return
 }
@@ -33,16 +36,18 @@ func (x *Queue) Receiver(fn FnReceiver, chErr chan<- error) {
 	for {
 		var message *sqs.ReceiveMessageOutput
 		if message, err = x.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-			QueueUrl:            x.url.QueueUrl,
-			MaxNumberOfMessages: 1,
-			WaitTimeSeconds:     30,
+			QueueUrl: x.url.QueueUrl,
+			//MaxNumberOfMessages: 1,
+			WaitTimeSeconds: 1,
 		}); err != nil {
 			chErr <- err
+			continue
 		}
 
 		for _, item := range message.Messages {
 			if err = fn(item); err != nil {
 				chErr <- err
+				continue
 			}
 
 			if _, err = x.client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
@@ -50,6 +55,7 @@ func (x *Queue) Receiver(fn FnReceiver, chErr chan<- error) {
 				ReceiptHandle: item.ReceiptHandle,
 			}); err != nil {
 				chErr <- err
+				continue
 			}
 		}
 	}

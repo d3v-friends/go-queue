@@ -20,6 +20,7 @@ type FnReceiver func(msg types.Message) (err error)
 const (
 	EnvAccessKey = "AWS_ACCESS_KEY_ID"
 	EnvSecretKey = "AWS_SECRET_ACCESS_KEY"
+	EnvRegion    = "AWS_REGION"
 )
 
 // NewConn aws 에서 환경변수 형식으로 데이터 입력하는것을 선호한다.
@@ -28,6 +29,7 @@ func NewConn() (res *Conn, err error) {
 
 	_ = fnEnv.Read(EnvAccessKey)
 	_ = fnEnv.Read(EnvSecretKey)
+	_ = fnEnv.Read(EnvRegion)
 
 	res = &Conn{}
 
@@ -35,6 +37,7 @@ func NewConn() (res *Conn, err error) {
 		return
 	}
 
+	res.cfg.Region = fnEnv.Read(EnvRegion)
 	res.client = sqs.NewFromConfig(res.cfg)
 
 	return
