@@ -1,0 +1,3 @@
+# go-queue
+
+## RabbitMQ Template
