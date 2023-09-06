@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/d3v-friends/pure-go/fnEnv"
@@ -38,6 +39,29 @@ func NewConn() (res *Conn, err error) {
 	}
 
 	res.cfg.Region = fnEnv.Read(EnvRegion)
+	res.client = sqs.NewFromConfig(res.cfg)
+
+	return
+}
+
+type INewConn struct {
+	Access string
+	Secret string
+	Region string
+}
+
+func NewConnWithAuth(i *INewConn) (res *Conn, err error) {
+	var ctx = context.Background()
+	res = &Conn{}
+	if res.cfg, err = config.LoadDefaultConfig(ctx, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+		i.Access,
+		i.Secret,
+		"",
+	))); err != nil {
+		return
+	}
+
+	res.cfg.Region = i.Region
 	res.client = sqs.NewFromConfig(res.cfg)
 
 	return
