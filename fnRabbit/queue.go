@@ -121,13 +121,4 @@ func (x *Queue[BODY]) Consume(
 
 }
 
-type IDeclareQueue struct {
-	Name       string
-	Durable    bool
-	AutoDelete bool
-	Exclusive  bool
-	NoWait     bool
-	Args       amqp.Table
-}
-
 type FnConsumer[T any] func(body *T) (err error)

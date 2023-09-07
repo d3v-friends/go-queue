@@ -26,17 +26,10 @@ func TestQueue(test *testing.T) {
 		test.Fatal(err)
 	}
 
-	var chErr = make(chan error)
-	defer close(chErr)
-
 	go queue.Receiver(func(msg types.Message) (err error) {
 		fmt.Printf("Received: %s\n", *msg.Body)
 		return
-	}, chErr)
-
-	go func() {
-		fmt.Printf("chErr: err=%s", <-chErr)
-	}()
+	})
 
 	test.Run("send message", func(t *testing.T) {
 		var ctx = context.TODO()
