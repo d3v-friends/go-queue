@@ -37,6 +37,7 @@ func (x *IConfig) Dial() string {
 func NewManager(i *IConfig) (mng *Manager, err error) {
 	mng = &Manager{}
 	if mng.conn, err = amqp.Dial(i.Dial()); err != nil {
+		mng = nil
 		return
 	}
 

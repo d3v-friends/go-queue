@@ -3,40 +3,79 @@ package fnSqs
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestQueue(test *testing.T) {
-	var conn, err = NewConn()
-	if err != nil {
+	var conn *Conn
+	var err error
+
+	if conn, err = NewConnWithAuth(&INewConn{
+		Access: "AKIA6M2OCFGS272OLIOK",
+		Secret: "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",
+		Region: "ap-northeast-2",
+	}); err != nil {
 		test.Fatal(err)
 	}
 
-	var ls []string
-	if ls, err = conn.List(context.Background()); err != nil {
-		test.Fatal(err)
+	var newQueueNm = func() string {
+		return fmt.Sprintf("queue-%s", uuid.NewString()[8:])
 	}
 
-	fmt.Printf("queue list: %s\n", ls)
-
-	var queue *Queue
-	if queue, err = conn.NewQueue(context.TODO(), "dev-sender"); err != nil {
-		test.Fatal(err)
-	}
-
-	go queue.Receiver(func(msg types.Message) (err error) {
-		fmt.Printf("Received: %s\n", *msg.Body)
-		return
-	})
-
-	test.Run("send message", func(t *testing.T) {
+	test.Run("create, delete queue", func(t *testing.T) {
 		var ctx = context.TODO()
-		if err = queue.Send(ctx, "Hello world"); err != nil {
+		var queueNm = newQueueNm()
+		if err = conn.Create(ctx, queueNm); err != nil {
 			t.Fatal(err)
 		}
 
-		time.Sleep(60 * time.Second)
+		if err = conn.Delete(ctx, queueNm); err != nil {
+			t.Fatal(err)
+		}
 	})
+
+	test.Run("send, receive queue", func(t *testing.T) {
+		var ctx = context.TODO()
+		var queueNm = newQueueNm()
+		if err = conn.Create(ctx, queueNm); err != nil {
+			t.Fatal(err)
+		}
+
+		defer func() {
+			if err = conn.Delete(ctx, queueNm); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		type Body struct {
+			Name string `json:"name"`
+		}
+
+		var body = &Body{
+			Name: fmt.Sprintf("hello-%s", uuid.NewString()[8:]),
+		}
+
+		var queue *Queue[Body]
+		if queue, err = NewQueue[Body](ctx, conn, queueNm); err != nil {
+			t.Fatal(err)
+		}
+
+		if err = queue.Send(ctx, body); err != nil {
+			t.Fatal(err)
+		}
+
+		time.Sleep(3 * time.Second)
+		queue.Receiver(func(msg *Body) (err error) {
+			assert.Equal(t, body.Name, msg.Name)
+
+			fmt.Printf("test done!\n")
+			t.Skip()
+			return
+		})
+
+	})
+
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/d3v-friends/pure-go/fnLogger"
+	"github.com/d3v-friends/go-pure/fnLogger"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"time"
 )
