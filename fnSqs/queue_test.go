@@ -14,8 +14,8 @@ func TestQueue(test *testing.T) {
 	var err error
 
 	if conn, err = NewConnWithAuth(&INewConn{
-		Access: "AKIA6M2OCFGS272OLIOK",
-		Secret: "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",
+		Access: "",
+		Secret: "",
 		Region: "ap-northeast-2",
 	}); err != nil {
 		test.Fatal(err)
