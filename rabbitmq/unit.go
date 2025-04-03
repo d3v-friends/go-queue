@@ -106,12 +106,12 @@ func (x *Unit[T]) Consume(
 
 		var data = new(T)
 		if err = json.Unmarshal(msg.Body, data); err != nil {
-			logger.CtxError(ctx, err.Error())
+			logger.CtxError(ctx, err)
 			continue
 		}
 
 		if err = consumer.Consume(ctx, data); err != nil {
-			logger.CtxError(ctx, err.Error())
+			logger.CtxError(ctx, err)
 			continue
 		}
 
