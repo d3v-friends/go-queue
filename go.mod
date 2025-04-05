@@ -1,9 +1,9 @@
 module github.com/d3v-friends/go-queue
 
-go 1.24.1
+go 1.23.8
 
 require (
-	github.com/d3v-friends/go-tools v1.0.4
+	github.com/d3v-friends/go-tools v1.0.6
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/shopspring/decimal v1.4.0
 )
