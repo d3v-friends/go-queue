@@ -17,6 +17,8 @@ type UnitOptions struct {
 	QueueName    string
 }
 
+type ConsumerInterceptor func(ctx context.Context, data amqp.Delivery) (context.Context, amqp.Delivery)
+
 func NewUnit[T any](mng *Manager, opt *UnitOptions) (res *Unit[T], err error) {
 	res = &Unit[T]{
 		opt: opt,
@@ -77,7 +79,7 @@ func (x *Unit[T]) Publish(v *T) (err error) {
 
 func (x *Unit[T]) Consume(
 	consumer Consumer[T],
-	interceptors ...func(ctx context.Context, data amqp.Delivery) (context.Context, amqp.Delivery),
+	interceptors ...ConsumerInterceptor,
 ) {
 	var delivery, err = x.ch.Consume(
 		x.opt.QueueName,
