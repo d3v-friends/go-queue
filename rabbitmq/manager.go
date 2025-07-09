@@ -18,9 +18,7 @@ type Options struct {
 
 func (x *Options) host() string {
 	return fmt.Sprintf(
-		"amqp://%s:%s@%s:%d",
-		x.Username,
-		x.Password,
+		"amqp://%s:%d",
 		x.Host,
 		x.QueuePort,
 	)
@@ -34,7 +32,14 @@ type Manager struct {
 
 func NewManager(opt *Options) (mng *Manager, err error) {
 	mng = &Manager{opts: opt}
-	if mng.connection, err = amqp.Dial(opt.host()); err != nil {
+	if mng.connection, err = amqp.DialConfig(opt.host(), amqp.Config{
+		SASL: []amqp.Authentication{
+			&amqp.PlainAuth{
+				Username: opt.Username,
+				Password: opt.Password,
+			},
+		},
+	}); err != nil {
 		return
 	}
 	if mng.channel, err = mng.connection.Channel(); err != nil {
